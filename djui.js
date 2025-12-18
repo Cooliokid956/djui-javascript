@@ -22,11 +22,14 @@ canvas.style.top = '0';
 canvas.style.left = '0';
 // canvas.style.width = '100vw';
 // canvas.style.height = '100vh';
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
+const dpi = window.devicePixelRatio
+let windowWidth = window.innerWidth
+let windowHeight = window.innerHeight
+canvas.width = windowWidth * dpi;
+canvas.height = windowHeight * dpi;
 document.body.appendChild(canvas);
 
-let resN64Math = window.innerHeight / 240;
+let resN64Math = windowHeight / 240;
 const context = canvas.getContext('2d');
 
 // The real stuffs
@@ -46,7 +49,6 @@ let configDjuiScale = 0; // You can set this elsewhere as needed
 
 function djui_gfx_get_scale() {
     if (configDjuiScale === 0) { // auto
-        const windowHeight = window.innerHeight;
         if (windowHeight < 768) {
             return 0.5;
         } else if (windowHeight < 1440) {
@@ -76,15 +78,18 @@ function get_res_scale() {
 }
 
 function update_canvas_size() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    canvas.style.width = `${window.innerWidth}px`;
-    canvas.style.height = `${window.innerHeight}px`;
+    windowWidth = window.innerWidth;
+    windowHeight = window.innerHeight;
+    canvas.width = windowWidth * dpi;
+    canvas.height = windowHeight * dpi;
+    canvas.style.width = `${windowWidth}px`;
+    canvas.style.height = `${windowHeight}px`;
+//    context.scale(1/dpi, 1/dpi);
 
     if (!DJUIJS_SAFE_N64) {
-        resN64Math = window.innerHeight / 240;
+        resN64Math = windowHeight / 240;
     } else {
-        resN64Math = Math.min(window.innerHeight / 240, window.innerWidth / 320);
+        resN64Math = Math.min(windowHeight / 240, windowWidth / 320);
     }
     resDJUIScale = djui_gfx_get_scale();
 }
@@ -357,7 +362,7 @@ const DJUI_POPUP_LIFETIME = 180
 function djui_hud_popup_create(message, lines) {
     // Log just in case
     console.log(message)
-    
+
     let height = lines * 32 + 32
     let split = message.split("\n")
     DjuiPopup.push({
@@ -394,7 +399,7 @@ function djui_popup_update() {
         alpha *= alpha
         if (elapsed > DJUI_POPUP_LIFETIME) alpha = 0
 
-        // Render Boarder (Thanks DJUI)
+        // Render Border (Thanks DJUI)
         djui_hud_set_color(0, 0, 0, 180 * alpha)
         djui_hud_render_rect(screenWidth - 404 - node.x, node.y, 4, node.height)
         djui_hud_render_rect(screenWidth - node.x, node.y, 4, node.height)
