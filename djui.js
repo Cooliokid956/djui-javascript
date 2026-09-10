@@ -1,7 +1,7 @@
 // DJUI Customization //
 
 // The FPS that DJUI runs at, Default is 30, set to 0 for uncapped
-const DJUIJS_FPS = 30
+const DJUIJS_FPS = 60
 
 // Sacrifices Accuracy for better mobile support with RESOLUTION_N64
 const DJUIJS_SAFE_N64 = true
@@ -128,9 +128,11 @@ function djui_hud_get_screen_height() {
     }
 }
 
+let ar, ag, ab
 function djui_hud_set_color(r, g, b, a) {
     a = a / 255;
     context.globalAlpha = a;
+    ar=r, ag=g, ab=b
     context.fillStyle = `rgb(${r}, ${g}, ${b})`;
 }
 
@@ -301,18 +303,13 @@ function djui_hud_print_text(text, x, y, scale) {
     context.fillText(text, x * resScale, y * resScale);
 }
 
+// shoutouts to https://stackoverflow.com/a/60949097/15417580
+
 function get_texture_info(texName) {
     const img = new Image();
     img.src = `./textures/${texName}.png`
     return img;
 }
-
-const gTextures = {
-    luigi: get_texture_info('djui-js/luigi.png'),
-    toad: get_texture_info('djui-js/toad.png'),
-    waluigi: get_texture_info('djui-js/waluigi.png'),
-    wario: get_texture_info('djui-js/wario.png'),
-};
 
 function djui_hud_render_texture(texture, x, y, scaleX, scaleY) {
     if (!(texture instanceof HTMLImageElement) || !texture.complete || texture.width == 0) {
@@ -332,10 +329,11 @@ function djui_hud_render_texture(texture, x, y, scaleX, scaleY) {
     context.imageSmoothingEnabled = false;
     context.drawImage(texture, drawX, drawY, drawW, drawH);
     context.globalCompositeOperation = "destination-over";
-    context.globalAlpha = 1
+    // context.globalAlpha = 1
+    // context.fillStyle = `rgb(${ar*alpha*alpha*alpha*alpha*alpha*alpha}, ${ag*alpha*alpha*alpha*alpha*alpha*alpha}, ${ab*alpha*alpha*alpha*alpha*alpha*alpha})`;
     context.fillRect(drawX, drawY, drawW, drawH);
     context.globalCompositeOperation = "multiply";
-    context.globalAlpha = alpha
+    // context.globalAlpha = alpha
     context.drawImage(texture, drawX, drawY, drawW, drawH);
     context.restore();
 }
