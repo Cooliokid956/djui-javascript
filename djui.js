@@ -48,7 +48,7 @@ let resDJUIScale = 1; // Scale for DJUI resolution
 let configDjuiScale = 0; // You can set this elsewhere as needed
 
 function djui_gfx_get_scale() {
-    if (configDjuiScale === 0) { // auto
+    if (configDjuiScale == 0) { // auto
         if (windowHeight < 768) {
             return 0.5;
         } else if (windowHeight < 1440) {
@@ -68,10 +68,10 @@ function djui_gfx_get_scale() {
 }
 
 function get_res_scale() {
-    if (currentResolution === RESOLUTION_DJUI) {
+    if (currentResolution == RESOLUTION_DJUI) {
         return resDJUIScale;
     }
-    else if (currentResolution === RESOLUTION_N64) {
+    else if (currentResolution == RESOLUTION_N64) {
         return resN64Math;
     }
     return 1;
@@ -95,7 +95,7 @@ function update_canvas_size() {
 }
 
 function djui_hud_set_resolution(res) {
-    if (res !== RESOLUTION_DJUI && res !== RESOLUTION_N64) {
+    if (res != RESOLUTION_DJUI && res != RESOLUTION_N64) {
         throw new Error('Invalid resolution: must be RESOLUTION_DJUI or RESOLUTION_N64');
     }
     currentResolution = res;
@@ -109,7 +109,7 @@ function djui_hud_get_resolution() {
 update_canvas_size()
 
 function djui_hud_get_screen_width() {
-    if (currentResolution === RESOLUTION_DJUI || !DJUIJS_SAFE_N64) {
+    if (currentResolution == RESOLUTION_DJUI || !DJUIJS_SAFE_N64) {
         return canvas.width / get_res_scale();
     } else {
         return canvas.width / get_res_scale();
@@ -117,9 +117,9 @@ function djui_hud_get_screen_width() {
 }
 
 function djui_hud_get_screen_height() {
-    if (currentResolution === RESOLUTION_DJUI) {
+    if (currentResolution == RESOLUTION_DJUI) {
         return canvas.height / resDJUIScale;
-    } else if (currentResolution === RESOLUTION_N64) {
+    } else if (currentResolution == RESOLUTION_N64) {
         if (!DJUIJS_SAFE_N64) {
             return 240; // N64 height is always 240 pixels
         } else {
@@ -275,10 +275,10 @@ context.font = '24px FONT_NORMAL';
 currentFont = 'FONT_NORMAL'
 currentFontSize = 32;
 function djui_hud_set_font(font) {
-    if (font === FONT_NORMAL) {
+    if (font == FONT_NORMAL) {
         currentFont = 'FONT_NORMAL';
         currentFontSize = 32;
-    } else if (font === FONT_ALIASED) {
+    } else if (font == FONT_ALIASED) {
         currentFont = 'FONT_ALIASED';
         currentFontSize = 32;
     }
@@ -303,7 +303,7 @@ function djui_hud_print_text(text, x, y, scale) {
 
 function get_texture_info(texName) {
     const img = new Image();
-    img.src = texName
+    img.src = `./textures/${texName}.png`
     return img;
 }
 
@@ -315,7 +315,7 @@ const gTextures = {
 };
 
 function djui_hud_render_texture(texture, x, y, scaleX, scaleY) {
-    if (!(texture instanceof HTMLImageElement) || !texture.complete || texture.width === 0) {
+    if (!(texture instanceof HTMLImageElement) || !texture.complete || texture.width == 0) {
         return;
     }
 
@@ -325,15 +325,23 @@ function djui_hud_render_texture(texture, x, y, scaleX, scaleY) {
     const drawW = texture.width * scaleX * scale;
     const drawH = texture.height * scaleY * scale;
 
+    const alpha = context.globalAlpha
     context.save();
+    context.globalCompositeOperation = "destination-out";
     apply_rotation_context(drawX, drawY, drawW, drawH);
     context.imageSmoothingEnabled = false;
+    context.drawImage(texture, drawX, drawY, drawW, drawH);
+    context.globalCompositeOperation = "destination-over";
+    context.globalAlpha = 1
+    context.fillRect(drawX, drawY, drawW, drawH);
+    context.globalCompositeOperation = "multiply";
+    context.globalAlpha = alpha
     context.drawImage(texture, drawX, drawY, drawW, drawH);
     context.restore();
 }
 
 function djui_hud_render_texture_tile(texture, x, y, scaleX, scaleY, tileX, tileY, tileWidth, tileHeight) {
-    if (!(texture instanceof HTMLImageElement) || !texture.complete || texture.naturalWidth === 0) {
+    if (!(texture instanceof HTMLImageElement) || !texture.complete || texture.naturalWidth == 0) {
         return;
     }
 
@@ -417,7 +425,7 @@ function djui_popup_update() {
         }
         
         // remove popup if fully faded
-        if (alpha === 0) {
+        if (alpha == 0) {
             DjuiPopup.splice(i, 1)
             continue
         }
@@ -432,7 +440,7 @@ function djui_popup_update() {
 
 const hookedFunctions = [];
 function hook_event(func) {
-    if (typeof func === 'function') {
+    if (typeof func == 'function') {
         hookedFunctions.push(func);
     }
 }
