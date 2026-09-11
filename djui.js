@@ -22,7 +22,7 @@ canvas.style.top = '0';
 canvas.style.left = '0';
 // canvas.style.width = '100vw';
 // canvas.style.height = '100vh';
-const dpi = window.devicePixelRatio
+let dpi = window.devicePixelRatio
 let windowWidth = window.innerWidth
 let windowHeight = window.innerHeight
 canvas.width = windowWidth * dpi;
@@ -30,7 +30,7 @@ canvas.height = windowHeight * dpi;
 document.body.appendChild(canvas);
 
 let resN64Math = windowHeight / 240;
-const context = canvas.getContext('2d');
+const ctx = canvas.getContext('2d');
 
 // The real stuffs
 
@@ -78,13 +78,14 @@ function get_res_scale() {
 }
 
 function update_canvas_size() {
+    dpi = window.devicePixelRatio
     windowWidth = window.innerWidth;
     windowHeight = window.innerHeight;
     canvas.width = windowWidth * dpi;
     canvas.height = windowHeight * dpi;
     canvas.style.width = `${windowWidth}px`;
     canvas.style.height = `${windowHeight}px`;
-//    context.scale(1/dpi, 1/dpi);
+    ctx.scale(dpi, dpi);
 
     if (!DJUIJS_SAFE_N64) {
         resN64Math = windowHeight / 240;
@@ -110,9 +111,9 @@ update_canvas_size()
 
 function djui_hud_get_screen_width() {
     if (currentResolution == RESOLUTION_DJUI || !DJUIJS_SAFE_N64) {
-        return canvas.width / get_res_scale();
+        return canvas.width / dpi / get_res_scale();
     } else {
-        return canvas.width / get_res_scale();
+        return canvas.width / dpi / get_res_scale();
     }
 }
 
@@ -131,9 +132,9 @@ function djui_hud_get_screen_height() {
 let ar, ag, ab
 function djui_hud_set_color(r, g, b, a) {
     a = a / 255;
-    context.globalAlpha = a;
+    ctx.globalAlpha = a;
     ar=r, ag=g, ab=b
-    context.fillStyle = `rgb(${r}, ${g}, ${b})`;
+    ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
 }
 
 const renderList = [];
@@ -151,9 +152,9 @@ function djui_hud_set_rotation(rotation, pivotX, pivotY) {
 function apply_rotation_context(x, y, width, height) {
     const pivotX = x + width * currentPivotX;
     const pivotY = y + height * currentPivotY;
-    context.translate(pivotX, pivotY);
-    context.rotate(currentRotation * Math.PI / 180);
-    context.translate(-pivotX, -pivotY);
+    ctx.translate(pivotX, pivotY);
+    ctx.rotate(currentRotation * Math.PI / 180);
+    ctx.translate(-pivotX, -pivotY);
 }
 
 let MOUSE_BUTTON_1 = (1 << 0)
@@ -258,22 +259,22 @@ function djui_hud_render_rect(x, y, width, height) {
     const sy = y * scale;
     const sw = width * scale;
     const sh = height * scale;
-    context.save();
     apply_rotation_context(sx, sy, sw, sh);
-    context.fillRect(sx, sy, sw, sh);
-    context.restore();
+    ctx.save();
+    ctx.fillRect(sx, sy, sw, sh);
+    ctx.restore();
 }
 
 const fontStyles = document.createElement('style');
 const FONT_NORMAL = 1;
 const FONT_ALIASED = 2;
 fontStyles.textContent = `
-@font-face {font-family: FONT_NORMAL; src: url('djui-js/sm64coopdx-normal.ttf') format('truetype'); font-weight: normal; font-style: normal;}
-@font-face {font-family: FONT_ALIASED; src: url('djui-js/sm64coopdx-aliased.ttf') format('truetype'); font-weight: normal; font-style: normal;}
+@font-face {font-family: FONT_NORMAL; src: url('./djui-js/sm64coopdx-normal.ttf') format('truetype'); font-weight: normal; font-style: normal;}
+@font-face {font-family: FONT_ALIASED; src: url('./djui-js/sm64coopdx-aliased.ttf') format('truetype'); font-weight: normal; font-style: normal;}
 `;
 document.head.appendChild(fontStyles);
 
-context.font = '24px FONT_NORMAL';
+ctx.font = '24px FONT_NORMAL';
 currentFont = 'FONT_NORMAL'
 currentFontSize = 32;
 function djui_hud_set_font(font) {
@@ -287,23 +288,21 @@ function djui_hud_set_font(font) {
 }
 function djui_hud_measure_text(text) {
     const scale = get_res_scale();
-    context.save();
-    context.textBaseline = 'top';
-    context.font = `${currentFontSize * scale}px ${currentFont}`;
-    const metrics = context.measureText(text);
-    context.restore();
+    ctx.save();
+    ctx.textBaseline = 'top';
+    ctx.font = `${currentFontSize * scale}px ${currentFont}`;
+    const metrics = ctx.measureText(text);
+    ctx.restore();
     return metrics.width / scale;
 }
 
 function djui_hud_print_text(text, x, y, scale) {
     const resScale = get_res_scale();
-    context.textBaseline = 'top'; // Align text at the top
-    context.imageSmoothingEnabled = false;
-    context.font = `${scale * currentFontSize * resScale}px ${currentFont}`;
-    context.fillText(text, x * resScale, y * resScale);
+    ctx.textBaseline = 'top'; // Align text at the top
+    ctx.imageSmoothingEnabled = false;
+    ctx.font = `${scale * currentFontSize * resScale}px ${currentFont}`;
+    ctx.fillText(text, x * resScale, y * resScale);
 }
-
-// shoutouts to https://stackoverflow.com/a/60949097/15417580
 
 function get_texture_info(texName) {
     const img = new Image();
@@ -322,20 +321,20 @@ function djui_hud_render_texture(texture, x, y, scaleX, scaleY) {
     const drawW = texture.width * scaleX * scale;
     const drawH = texture.height * scaleY * scale;
 
-    const alpha = context.globalAlpha
-    context.save();
-    context.globalCompositeOperation = "destination-out";
+    const alpha = ctx.globalAlpha
+    ctx.save();
+    ctx.globalCompositeOperation = "destination-out";
     apply_rotation_context(drawX, drawY, drawW, drawH);
-    context.imageSmoothingEnabled = false;
-    context.drawImage(texture, drawX, drawY, drawW, drawH);
-    context.globalCompositeOperation = "destination-over";
-    // context.globalAlpha = 1
-    // context.fillStyle = `rgb(${ar*alpha*alpha*alpha*alpha*alpha*alpha}, ${ag*alpha*alpha*alpha*alpha*alpha*alpha}, ${ab*alpha*alpha*alpha*alpha*alpha*alpha})`;
-    context.fillRect(drawX, drawY, drawW, drawH);
-    context.globalCompositeOperation = "multiply";
-    // context.globalAlpha = alpha
-    context.drawImage(texture, drawX, drawY, drawW, drawH);
-    context.restore();
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(texture, drawX, drawY, drawW, drawH);
+    ctx.globalCompositeOperation = "destination-over";
+    // ctx.globalAlpha = 1
+    // ctx.fillStyle = `rgb(${ar*alpha*alpha*alpha*alpha*alpha*alpha}, ${ag*alpha*alpha*alpha*alpha*alpha*alpha}, ${ab*alpha*alpha*alpha*alpha*alpha*alpha})`;
+    ctx.fillRect(drawX, drawY, drawW, drawH);
+    ctx.globalCompositeOperation = "multiply";
+    // ctx.globalAlpha = alpha
+    ctx.drawImage(texture, drawX, drawY, drawW, drawH);
+    ctx.restore();
 }
 
 function djui_hud_render_texture_tile(texture, x, y, scaleX, scaleY, tileX, tileY, tileWidth, tileHeight) {
@@ -349,15 +348,15 @@ function djui_hud_render_texture_tile(texture, x, y, scaleX, scaleY, tileX, tile
     const drawW = tileWidth * scaleX * scale;
     const drawH = tileHeight * scaleY * scale;
 
-    context.save();
     apply_rotation_context(drawX, drawY, drawW, drawH);
-    context.imageSmoothingEnabled = false;
-    context.drawImage(
+    ctx.save();
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(
         texture,
         tileX, tileY, tileWidth, tileHeight, // source crop rectangle
         drawX, drawY, drawW, drawH           // destination on canvas
     );
-    context.restore();
+    ctx.restore();
 }
 
 // DJUI Popups
@@ -449,7 +448,7 @@ function djui_on_render() {
     renderList.length = 0;
     update_canvas_size()
 
-    context.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
     for (const fn of hookedFunctions) {
         try {
             fn();
