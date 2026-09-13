@@ -4,7 +4,7 @@
 const DJUIJS_FPS = 60
 
 // Sacrifices Accuracy for better mobile support with RESOLUTION_N64
-const DJUIJS_SAFE_N64 = true
+const DJUIJS_SAFE_N64 = false
 
 // Set up canvas for rendering
 if (!document.body) {
@@ -20,6 +20,7 @@ canvas.id = 'myCanvas';
 canvas.style.position = 'fixed';
 canvas.style.top = '0';
 canvas.style.left = '0';
+canvas.style.imageRendering = 'pixelated'
 // canvas.style.width = '100vw';
 // canvas.style.height = '100vh';
 let dpi = window.devicePixelRatio
@@ -31,6 +32,9 @@ document.body.appendChild(canvas);
 
 let resN64Math = windowHeight / 240;
 const ctx = canvas.getContext('2d');
+
+// const buffer = document.createElement('canvas');
+// const buf = buffer.getContext('2d');
 
 // The real stuffs
 
@@ -45,7 +49,7 @@ let currentResolution = RESOLUTION_DJUI;
 let resDJUIScale = 1; // Scale for DJUI resolution
 
 // configDjuiScale: 0 = auto, 1 = 0.5, 2 = 0.85, 3 = 1.0, 4 = 1.5
-let configDjuiScale = 0; // You can set this elsewhere as needed
+let configDjuiScale = 3; // You can set this elsewhere as needed
 
 function djui_gfx_get_scale() {
     if (configDjuiScale == 0) { // auto
@@ -86,6 +90,8 @@ function update_canvas_size() {
     canvas.style.width = `${windowWidth}px`;
     canvas.style.height = `${windowHeight}px`;
     ctx.scale(dpi, dpi);
+    
+    // buf.scale(dpi, dpi);
 
     if (!DJUIJS_SAFE_N64) {
         resN64Math = windowHeight / 240;
@@ -119,12 +125,12 @@ function djui_hud_get_screen_width() {
 
 function djui_hud_get_screen_height() {
     if (currentResolution == RESOLUTION_DJUI) {
-        return canvas.height / resDJUIScale;
+        return canvas.height / dpi / resDJUIScale;
     } else if (currentResolution == RESOLUTION_N64) {
         if (!DJUIJS_SAFE_N64) {
             return 240; // N64 height is always 240 pixels
         } else {
-            return canvas.height / get_res_scale()
+            return canvas.height / dpi / get_res_scale()
         }
     }
 }
@@ -135,6 +141,7 @@ function djui_hud_set_color(r, g, b, a) {
     ctx.globalAlpha = a;
     ar=r, ag=g, ab=b
     ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
+    // buf.fillStyle = `rgb(${r}, ${g}, ${b})`;
 }
 
 const renderList = [];
@@ -149,7 +156,7 @@ function djui_hud_set_rotation(rotation, pivotX, pivotY) {
     currentPivotY = pivotY;
 }
 
-function apply_rotation_context(x, y, width, height) {
+function apply_rotation_context(ctx, x, y, width, height) {
     const pivotX = x + width * currentPivotX;
     const pivotY = y + height * currentPivotY;
     ctx.translate(pivotX, pivotY);
@@ -259,8 +266,8 @@ function djui_hud_render_rect(x, y, width, height) {
     const sy = y * scale;
     const sw = width * scale;
     const sh = height * scale;
-    apply_rotation_context(sx, sy, sw, sh);
     ctx.save();
+    apply_rotation_context(ctx, sx, sy, sw, sh);
     ctx.fillRect(sx, sy, sw, sh);
     ctx.restore();
 }
@@ -321,10 +328,11 @@ function djui_hud_render_texture(texture, x, y, scaleX, scaleY) {
     const drawW = texture.width * scaleX * scale;
     const drawH = texture.height * scaleY * scale;
 
+    // works well only at full alpha
     const alpha = ctx.globalAlpha
     ctx.save();
     ctx.globalCompositeOperation = "destination-out";
-    apply_rotation_context(drawX, drawY, drawW, drawH);
+    apply_rotation_context(ctx, drawX, drawY, drawW, drawH);
     ctx.imageSmoothingEnabled = false;
     ctx.drawImage(texture, drawX, drawY, drawW, drawH);
     ctx.globalCompositeOperation = "destination-over";
@@ -335,6 +343,47 @@ function djui_hud_render_texture(texture, x, y, scaleX, scaleY) {
     // ctx.globalAlpha = alpha
     ctx.drawImage(texture, drawX, drawY, drawW, drawH);
     ctx.restore();
+
+    // true but really expensive methods below
+    // buf.save();
+    // if (texture.width > buffer.width) buffer.width = texture.width
+    // if (texture.height > buffer.height) buffer.height = texture.height
+    // // buf.clearRect(0, 0, buffer.width, buffer.height)
+    // buf.imageSmoothingEnabled = false;
+    // buf.globalCompositeOperation = "source-over";
+    // buf.fillStyle = ctx.fillStyle
+    // buf.fillRect(0, 0, texture.width, texture.height);
+    // buf.globalCompositeOperation = "destination-in";
+    // buf.drawImage(texture, 0, 0);
+    // buf.globalCompositeOperation = "multiply";
+    // buf.drawImage(texture, 0, 0);
+    // ctx.save();
+    // apply_rotation_context(ctx, drawX, drawY, drawW, drawH);
+    // ctx.imageSmoothingEnabled = false;
+    // ctx.drawImage(buffer, drawX, drawY);
+    // buf.restore()
+    // ctx.resetTransform()
+
+
+    // // buf.save();
+    // buffer.width = texture.width
+    // buffer.height = texture.height
+    // // buf.clearRect(0, 0, buffer.width, buffer.height)
+    // buf.imageSmoothingEnabled = false;
+    // buf.globalCompositeOperation = "source-over";
+    // buf.fillStyle = ctx.fillStyle
+    // buf.fillRect(0, 0, buffer.width, buffer.height);
+    // buf.globalCompositeOperation = "destination-in";
+    // buf.drawImage(texture, 0, 0);
+    // buf.globalCompositeOperation = "multiply";
+    // buf.drawImage(texture, 0, 0);
+    // // ctx.save();
+    // apply_rotation_context(ctx, drawX, drawY, drawW, drawH);
+    // ctx.drawImage(buffer, drawX, drawY, drawW, drawH);
+    // // buf.restore()
+    // // ctx.restore();
+    // ctx.resetTransform()
+    // // ctx.restore();
 }
 
 function djui_hud_render_texture_tile(texture, x, y, scaleX, scaleY, tileX, tileY, tileWidth, tileHeight) {
@@ -348,8 +397,8 @@ function djui_hud_render_texture_tile(texture, x, y, scaleX, scaleY, tileX, tile
     const drawW = tileWidth * scaleX * scale;
     const drawH = tileHeight * scaleY * scale;
 
-    apply_rotation_context(drawX, drawY, drawW, drawH);
     ctx.save();
+    apply_rotation_context(ctx, drawX, drawY, drawW, drawH);
     ctx.imageSmoothingEnabled = false;
     ctx.drawImage(
         texture,
