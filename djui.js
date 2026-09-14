@@ -101,6 +101,14 @@ function update_canvas_size() {
     resDJUIScale = djui_gfx_get_scale();
 }
 
+let center = false
+function djui_hud_set_centered(centered) {
+    center = centered
+    if (center)
+        ctx.translate(windowWidth/2, windowHeight/2)
+    else ctx.translate(-windowWidth/2, -windowHeight/2)
+}
+
 function djui_hud_set_resolution(res) {
     if (res != RESOLUTION_DJUI && res != RESOLUTION_N64) {
         throw new Error('Invalid resolution: must be RESOLUTION_DJUI or RESOLUTION_N64');
@@ -241,11 +249,11 @@ canvas.addEventListener('touchcancel', function (e) {
 
 
 function djui_hud_get_mouse_x() {
-    return _djui_mouse_x;
+    return _djui_mouse_x - (center ? djui_hud_get_screen_width()/2 : 0);
 }
 
 function djui_hud_get_mouse_y() {
-    return _djui_mouse_y;
+    return _djui_mouse_y - (center ? djui_hud_get_screen_height()/2 : 0);
 }
 
 function djui_hud_get_mouse_buttons_down() {
