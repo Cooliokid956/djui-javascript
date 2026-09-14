@@ -298,7 +298,7 @@ function djui_hud_set_font(font) {
         currentFontSize = 32;
     } else if (font == FONT_ALIASED) {
         currentFont = 'FONT_ALIASED';
-        currentFontSize = 32;
+        currentFontSize = 16;
     }
 }
 function djui_hud_measure_text(text) {
